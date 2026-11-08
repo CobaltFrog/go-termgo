@@ -7,14 +7,15 @@ import (
 
 type FrameTarget interface {
 	BeginFrame()
-	Change(x, y int, z uint16, c rune, fg, bg Color)
+	Update(x, y int, z uint16, c rune, fg, bg Color, style GraphicsMode)
 	EndFrame() []CellDiff
 	Swap()
+	GetSize() (width, height int)
 }
 
 type RenderTarget struct {
 	front *FrameBuffer 
-	back *FrameBuffer
+	back  *FrameBuffer
 }
 
 func NewRenderTarget(w, h int) (*RenderTarget, error) {
@@ -38,36 +39,59 @@ func NewRenderTarget(w, h int) (*RenderTarget, error) {
 	}, nil
 }
 
+func (rt *RenderTarget) GetSize() (width, height int) {
+	return rt.front.Width, rt.front.Height
+}
+
 func (rt *RenderTarget) BeginFrame() {
 	rt.back.Clear()
 }
 
-func (rt *RenderTarget) Change(x, y int, z uint16, c rune, fg, bg Color) {
-	rt.back.UpdateCell(x, y, z, c, fg, bg)
+func (rt *RenderTarget) Update(x, y int, c Cell) (bool, error) {
+	return rt.back.UpdateCell(x, y, c)
+}
+
+func (rt *RenderTarget) GetFrontCell(x, y int) (Cell, error) {
+	p, err := rt.front.getCell(x, y)
+	if err != nil {
+		return  Cell{}, err
+	}
+
+	return Cell {
+		Char: p.Char,
+		Depth: p.Depth,
+		Foreground: p.Foreground,
+		Background: p.Background,
+		Style: p.Style,
+	}, nil
 }
 
 func (rt *RenderTarget) EndFrame() []CellDiff {
 	res := make([]CellDiff, rt.front.Height * rt.front.Width)
 	for y := range rt.back.Height {
 		for x := range rt.front.Width {
-			old, err := rt.front.GetCell(x, y);
+			pos := y * rt.front.Width + x
+			old, err := rt.front.getCell(x, y);
 			if  err != nil {
-				fmt.Fprintf(os.Stderr, "cell access: %v\n", err)
+				fmt.Fprintf(os.Stderr, "end frame: %v\n", err)
 				return res
 			}
 
-			nw, err := rt.back.GetCell(x, y);
+			nw, err := rt.back.getCell(x, y);
 			if  err != nil {
-				fmt.Fprintf(os.Stderr, "cell access: %v\n", err)
+				fmt.Fprintf(os.Stderr, "end frame: %v\n", err)
 				return res
 			}
 
-			if old.Char       != nw.Char       ||
-			   old.Foreground != nw.Foreground ||
-			   old.Background != nw.Background ||
-			   old.Depth      <  nw.Depth {
+			if  nw.Depth       >= old.Depth     &&(
+				old.Char       != nw.Char       ||
+			    old.Style      != nw.Style      ||
+			    old.Foreground != nw.Foreground ||
+			    old.Background != nw.Background ){
 
-				res[y * rt.front.Width + x].Cell = &nw
+				res[pos].Cell = nw
+				res[pos].X = x
+				res[pos].Y = y
 			}
 		}
 	}

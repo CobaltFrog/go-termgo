@@ -7,10 +7,10 @@ import (
 
 type FrameTarget interface {
 	BeginFrame()
-	Update(x, y int, z uint16, c rune, fg, bg Color, style GraphicsMode)
+	Update(x, y, z uint16, c rune, fg, bg Color, style GraphicsMode)
 	EndFrame() []CellDiff
 	Swap()
-	GetSize() (width, height int)
+	GetSize() (width, height uint16)
 }
 
 type RenderTarget struct {
@@ -18,19 +18,19 @@ type RenderTarget struct {
 	back  *FrameBuffer
 }
 
-func NewRenderTarget(w, h int) (*RenderTarget, error) {
+func NewRenderTarget(w, h uint16) (*RenderTarget, error) {
 	if w <= 0 || h <= 0 {
 		return &RenderTarget{}, fmt.Errorf("frame size is zero or negative")
 	}
 
 	p_fr, err := newFrameBuffer(w, h)
 	if  err != nil {
-		return &RenderTarget{}, fmt.Errorf("render target: front buffer: %v\n", err)
+		return &RenderTarget{}, fmt.Errorf("front buffer: %v\n", err)
 	}
 
 	p_bk, err := newFrameBuffer(w, h)
 	if ; err != nil {
-		return &RenderTarget{}, fmt.Errorf("render target: back buffer: %v\n", err)
+		return &RenderTarget{}, fmt.Errorf("back buffer: %v\n", err)
 	}
 
 	return &RenderTarget {
@@ -39,7 +39,7 @@ func NewRenderTarget(w, h int) (*RenderTarget, error) {
 	}, nil
 }
 
-func (rt *RenderTarget) GetSize() (width, height int) {
+func (rt *RenderTarget) GetSize() (width, height uint16) {
 	return rt.front.Width, rt.front.Height
 }
 
@@ -47,11 +47,11 @@ func (rt *RenderTarget) BeginFrame() {
 	rt.back.Clear()
 }
 
-func (rt *RenderTarget) Update(x, y int, c Cell) (bool, error) {
+func (rt *RenderTarget) Update(x, y uint16, c Cell) (bool, error) {
 	return rt.back.UpdateCell(x, y, c)
 }
 
-func (rt *RenderTarget) GetFrontCell(x, y int) (Cell, error) {
+func (rt *RenderTarget) GetFrontCell(x, y uint16) (Cell, error) {
 	p, err := rt.front.getCell(x, y)
 	if err != nil {
 		return  Cell{}, err

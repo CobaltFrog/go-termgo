@@ -11,8 +11,8 @@ type Cell struct {
 }
 
 type CellDiff struct {
-	X int
-	Y int
+	X uint16
+	Y uint16
 	Cell *Cell
 }
 

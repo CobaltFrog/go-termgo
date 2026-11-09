@@ -6,11 +6,11 @@ import (
 
 type FrameBuffer struct {
 	Frame []Cell
-	Width  int
-	Height int
+	Width  uint16
+	Height uint16
 }
 
-func newFrameBuffer(w, h int) (*FrameBuffer, error) {
+func newFrameBuffer(w, h uint16) (*FrameBuffer, error) {
 	if w <= 0 || h <= 0 {
 		return &FrameBuffer{}, fmt.Errorf("frame buffer: size is zero or negative")
 	}
@@ -43,7 +43,7 @@ func (fb *FrameBuffer) Clear() {
 
 // Changes cell depth, rune and color in provided point in frame buffer
 // Returns true if cdepth, rune and color in provided point in frame buffell values are changed, false otherwise, and on error
-func (fb *FrameBuffer) UpdateCell(x, y int, c Cell) (bool, error) {
+func (fb *FrameBuffer) UpdateCell(x, y uint16, c Cell) (bool, error) {
 	if !fb.inBounds(x, y) {
 		return  false, fmt.Errorf("put cell: point out of frame bounds")
 	}
@@ -62,7 +62,7 @@ func (fb *FrameBuffer) UpdateCell(x, y int, c Cell) (bool, error) {
 	return false, nil
 }
 
-func (fb *FrameBuffer) isUpdated(idx int, c Cell) bool {
+func (fb *FrameBuffer) isUpdated(idx uint16, c Cell) bool {
 	return c.Depth      >= fb.Frame[idx].Depth  &&  (
 		   c.Char       != fb.Frame[idx].Char       ||
 		   c.Style      != fb.Frame[idx].Style      ||
@@ -70,7 +70,7 @@ func (fb *FrameBuffer) isUpdated(idx int, c Cell) bool {
 		   c.Background != fb.Frame[idx].Background )
 }
 
-func (fb *FrameBuffer) getCell(x, y int) (*Cell, error){
+func (fb *FrameBuffer) getCell(x, y uint16) (*Cell, error){
 	if !fb.inBounds(x, y) {
 		   return nil, fmt.Errorf("get cell: point out of frame bounds")
 	}
@@ -78,10 +78,8 @@ func (fb *FrameBuffer) getCell(x, y int) (*Cell, error){
 	return &fb.Frame[fb.idx(x, y)], nil
 }
 
-func (fb *FrameBuffer) inBounds(x, y int) bool {
-	if x < 0        ||
-	   y < 0        ||
-	   x > fb.Width ||
+func (fb *FrameBuffer) inBounds(x, y uint16) bool {
+	if x > fb.Width ||
 	   y > fb.Height {
 		return false
 	}
@@ -89,6 +87,6 @@ func (fb *FrameBuffer) inBounds(x, y int) bool {
 	return true
 }
 
-func (fb *FrameBuffer) idx(x, y int) int {
+func (fb *FrameBuffer) idx(x, y uint16) uint16 {
 	return y * fb.Width + x
 }

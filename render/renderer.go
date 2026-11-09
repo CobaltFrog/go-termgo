@@ -10,7 +10,7 @@ type Renderer interface {
 	Draw(io.Writer, []CellDiff)
 }
 
-type ColorMode int
+type ColorMode byte
 
 const (
 	CMTCLR ColorMode = iota
@@ -39,7 +39,7 @@ type TerminalRenderer struct {
 	Mask    *Color // mask for default terminal bg color
 	Repositioned bool // cursor position unknown
 	builder  strings.Builder
-	cursorX, cursorY int
+	cursorX, cursorY uint16
 }
 
 func (r *TerminalRenderer) Draw(out io.Writer, diffs []CellDiff) {
